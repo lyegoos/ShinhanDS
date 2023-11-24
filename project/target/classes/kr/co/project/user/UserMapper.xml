@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.project.user.UserMapper">
+	
+	<select id="dupEmail" resultType="Integer" parameterType="String">
+		SELECT COUNT(*) FROM user WHERE email=#{xxx} <!-- 매개변수가 하나일 경우 아무렇게나 써도 괜찮다 -->
+	</select>
+	
+	<insert id="regist" parameterType="kr.co.project.user.UserVO">
+		INSERT INTO user(
+			email, pwd, name, gender, birthday, hp, registdate, zipcode, addr1, addr2
+		) VALUES(
+			#{email}, MD5(#{pwd}), #{name}, #{gender}, #{birthday}, #{hp}, NOW(), #{zipcode}, #{addr1}, #{addr2}	 <!-- statement로 쓸거면 따옴표 필수 ex. '${id}' -->	
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">		<!-- membervo에 있는 no임. 거기에 select한 값을 넣어주는 것 -->
+			SELECT LAST_INSERT_ID()		<!-- 내가 방금 insert한 그 데이터의 주소?가 나온다?-->
+		</selectKey>
+	</insert>
+	
+	
+	<select id="login" resultType="kr.co.project.user.UserVO" parameterType="kr.co.project.user.UserVO">
+		SELECT * FROM user WHERE email=#{email} AND pwd=MD5(#{pwd})
+	</select>
+	
+	<select id="detail" resultType="kr.co.project.user.UserVO" parameterType="int">
+		SELECT * FROM user WHERE no=#{no}
+	</select>
+	
+	<update id="update" parameterType="kr.co.project.user.UserVO">
+		UPDATE user SET
+		
+			<!-- pwd가 빈값이 아닌 경우에만 update 치기 위한 if문 / MD5로 암호화해서 저장 -->	
+			<if test="pwd != ''">
+			pwd = MD5(#{pwd}),
+			</if>
+			name = #{name},
+			gender = #{gender},
+			birthday = #{birthday},
+			hp = #{hp},
+			zipcode = #{zipcode},
+			addr1 = #{addr1},
+			addr2 = #{addr2}
+		WHERE no = #{no}
+	</update>
+	
+	
+</mapper>

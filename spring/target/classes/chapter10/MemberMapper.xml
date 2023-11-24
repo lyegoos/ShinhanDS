@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="chapter10.MemberMapper">
+	
+	<insert id="insertMember" parameterType="chapter10.MemberVO">
+		INSERT INTO member(
+			id, name, filename_org, filename_real
+		) VALUES(
+			#{id}, #{name}, #{filename_org}, #{filename_real}	 <!-- statement로 쓸거면 따옴표 필수 ex. '${id}' -->	
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">		<!-- membervo에 있는 no임. 거기에 select한 값을 넣어주는 것 -->
+			SELECT LAST_INSERT_ID()		<!-- 내가 방금 insert한 그 데이터의 주소?가 나온다?-->
+		</selectKey>
+	</insert>
+	
+	<insert id="insertHobby" parameterType="chapter10.HobbyVO">
+		INSERT INTO hobby(
+			<!-- hobbyname,member_no --> 
+			hobbyname, member_no
+		) VALUES(
+			#{hobbyname}, #{member_no}
+		)
+	</insert>
+	
+	<select id="listall" resultType="chapter10.MemberVO">
+		SELECT *
+			FROM member ORDER BY no DESC
+	</select>
+	
+
+</mapper>

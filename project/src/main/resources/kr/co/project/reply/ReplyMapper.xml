@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.project.user.ReplyMapper">
+	
+	<sql id="whereSql">
+		<where>
+			<if test="searchWord != null and searchWord != ''">
+				<if test="searchType == 'all'">
+					title LIKE '%${searchWord}%' OR content LIKE '%${searchWord}%'
+					<!-- ''로 묶여있는 경우 ?가 들어가면 안되서 $을 써야한다. -->
+				</if>
+				<if test="searchType != 'all'">
+					${searchType} LIKE '%${searchWord}%'
+				</if>
+			</if>
+		</where>
+	</sql>
+	
+	<select id="count" parameterType="kr.co.project.reply.ReplyVO" resultType="int">
+		SELECT COUNT(*) FROM reply
+		<include refid="whereSql"/>
+	</select>
+	
+	<select id="list" parameterType="kr.co.project.reply.ReplyVO" resultType="kr.co.project.reply.ReplyVO">
+		SELECT * FROM reply
+		<include refid="whereSql"/>
+		ORDER BY gno DESC, ono ASC
+		LIMIT #{startIdx}, 10
+		<!-- mysql은 리미트를 사용해서 시작값, 갯수 -->
+	</select>
+	
+	
+	<select id="detail" resultType="int" parameterType="kr.co.project.reply.ReplyVO">
+		SELECT * FROM reply WHERE no=#{no}
+	</select>
+	<update id="updateViewcnt" parameterType="int">
+		UPDATE reply SET viewcnt=viewcnt+1 WHERE no=#{no}
+	</update>
+	
+	<update id="update" parameterType="kr.co.project.reply.ReplyVO">
+		UPDATE reply SET
+			title=#{title}
+			, content=#{content}
+			<if test="filename_org != null">
+			, filename_org=#{filename_org}
+			, filename_real=#{filename_real}
+			</if>
+		WHERE no=#{no}
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		DELETE FROM reply WHERE no=#{no}
+	</delete>
+	
+	<!-- 게시글 등록 -->
+	<insert id="insert" parameterType="kr.co.project.reply.ReplyVO">
+		INSERT INTO reply (
+			`title`,
+			`content`,
+			`writedate,
+			`viewcnt`,
+			`filename_org`,
+			`filename_real`,
+			`likecnt`,
+			`user_no`,
+			`gno`,
+			`ono`,
+			`nested`
+		) VALUES (
+			#{title},
+			#{content},
+			NOW(),
+			0,
+			#{filename_org},
+			#{filename_real},
+			0,
+			#{user_no},
+			0,
+			0,
+			0	
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">	
+			SELECT LAST_INSERT_ID()	
+		</selectKey>
+	</insert>
+	<update id="updateGno" parameterType="int">
+		UPDATE reply SET gno=#{no} WHERE no=#{no}
+	</update>
+	
+	<update id="updateOno" parameterType="kr.co.project.reply.ReplyVO">
+		UPDATE reply SET ono=ono+1 WHERE gno=#{gno} AND ono > #{ono}
+	</update>
+	
+	<insert id="reply" parameterType="kr.co.project.reply.ReplyVO">
+		INSERT INTO reply (
+			`title`,
+			`content`,
+			`writedate,
+			`viewcnt`,
+			`filename_org`,
+			`filename_real`,
+			`likecnt`,
+			`user_no`,
+			`gno`,
+			`ono`,
+			`nested`
+		) VALUES (
+			#{title},
+			#{content},
+			NOW(),
+			0,
+			#{filename_org},
+			#{filename_real},
+			0,
+			#{user_no},
+			#{gno},
+			#{ono},
+			#{nested}	
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">	
+			SELECT LAST_INSERT_ID()	
+		</selectKey>
+	</insert>
+	
+	
+	
+	
+	<insert id="regist" parameterType="kr.co.project.user.UserVO">
+		INSERT INTO user(
+			email, pwd, name, gender, birthday, hp, registdate, zipcode, addr1, addr2
+		) VALUES(
+			#{email}, MD5(#{pwd}), #{name}, #{gender}, #{birthday}, #{hp}, NOW(), #{zipcode}, #{addr1}, #{addr2}	 <!-- statement로 쓸거면 따옴표 필수 ex. '${id}' -->	
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">		<!-- membervo에 있는 no임. 거기에 select한 값을 넣어주는 것 -->
+			SELECT LAST_INSERT_ID()		<!-- 내가 방금 insert한 그 데이터의 주소?가 나온다?-->
+		</selectKey>
+	</insert>
+	
+	
+	<select id="login" resultType="kr.co.project.user.UserVO" parameterType="kr.co.project.user.UserVO">
+		SELECT * FROM user WHERE email=#{email} AND pwd=MD5(#{pwd})
+	</select>
+	
+	
+	
+	<update id="update" parameterType="kr.co.project.user.UserVO">
+		UPDATE user SET
+		
+			<!-- pwd가 빈값이 아닌 경우에만 update 치기 위한 if문 / MD5로 암호화해서 저장 -->	
+			<if test="pwd != ''">
+			pwd = MD5(#{pwd}),
+			</if>
+			name = #{name},
+			gender = #{gender},
+			birthday = #{birthday},
+			hp = #{hp},
+			zipcode = #{zipcode},
+			addr1 = #{addr1},
+			addr2 = #{addr2}
+		WHERE no = #{no}
+	</update>
+	
+	
+</mapper>

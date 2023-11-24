@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.project.reply.ReplyMapper">
+	<sql id="whereSql">
+		<where>
+			<if test="searchWord != null and searchWord != ''">
+				<if test="searchType == 'all'">
+					title LIKE '%${searchWord}%' OR content LIKE '%${searchWord}%'
+				</if>
+				<if test="searchType != 'all'">
+					${searchType} LIKE '%${searchWord}%'
+				</if>
+			</if>
+		</where>
+	</sql>
+	<select id="count" parameterType="kr.co.project.reply.ReplyVO" resultType="int">
+		SELECT COUNT(*) FROM reply
+		<include refid="whereSql"/>
+	</select>
+	
+	<select id="list" parameterType="kr.co.project.reply.ReplyVO" resultType="kr.co.project.reply.ReplyVO">
+		SELECT *,
+			(SELECT name FROM user WHERE no=reply.user_no) as user_name,
+			(SELECT COUNT(*) from comment WHERE parent_no=reply.no) as comment_count
+		FROM reply
+		<include refid="whereSql"/>
+		ORDER BY gno DESC, ono ASC
+		LIMIT #{startIdx}, 10
+	</select>
+	
+	<select id="detail" parameterType="int" resultType="kr.co.project.reply.ReplyVO">
+		SELECT * FROM reply WHERE no = #{no}
+	</select>
+	<update id="updateViewcnt" parameterType="int">
+		UPDATE reply SET viewcnt=viewcnt+1 WHERE no=#{no}
+	</update>
+	
+	<update id="update" parameterType="kr.co.project.reply.ReplyVO">
+		UPDATE reply SET 
+			title=#{title}
+			, content=#{content}
+			<if test="filename_org != null">
+			, filename_org=#{filename_org}
+			, filename_real=#{filename_real}
+			</if> 
+		WHERE no=#{no}
+	</update>
+	<delete id="delete" parameterType="int">
+		DELETE FROM reply WHERE no=#{no}
+	</delete>
+	
+	<insert id="insert" parameterType="kr.co.project.reply.ReplyVO">
+		INSERT INTO reply (
+			`title`,
+			`content`,
+			`writedate`,
+			`viewcnt`,
+			`filename_org`,
+			`filename_real`,
+			`likecnt`,
+			`user_no`,
+			`gno`,
+			`ono`,
+			`nested`
+		) VALUES (
+			#{title},
+			#{content},
+			NOW(),
+			0,
+			#{filename_org},
+			#{filename_real},
+			0,
+			#{user_no},
+			0,
+			0,
+			0
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	<update id="updateGno" parameterType="int">
+		UPDATE reply SET gno=#{no} WHERE no=#{no}
+	</update>
+	<update id="updateOno" parameterType="kr.co.project.reply.ReplyVO">
+		UPDATE reply SET ono=ono+1 WHERE gno=#{gno} AND ono > #{ono}
+	</update>
+	<insert id="reply" parameterType="kr.co.project.reply.ReplyVO">
+		INSERT INTO reply (
+			`title`,
+			`content`,
+			`writedate`,
+			`viewcnt`,
+			`filename_org`,
+			`filename_real`,
+			`likecnt`,
+			`user_no`,
+			`gno`,
+			`ono`,
+			`nested`
+		) VALUES (
+			#{title},
+			#{content},
+			NOW(),
+			0,
+			#{filename_org},
+			#{filename_real},
+			0,
+			#{user_no},
+			#{gno},
+			#{ono},
+			#{nested}
+		)
+		<selectKey keyProperty="no" order="AFTER" resultType="int">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	<update id="fileDelete" parameterType="int">
+		UPDATE reply SET filename_org=null, filename_real=null WHERE no=#{no}
+	</update>
+</mapper>

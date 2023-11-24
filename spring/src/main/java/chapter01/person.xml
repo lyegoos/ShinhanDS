@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="personService" class="chapter01.PersonServiceImpl">	<!-- id는 객체가 담긴 변수명 -->
+		<property name="name">
+			<value>홍길동</value>
+		</property>
+	</bean>
+	<bean id="personService1" class="chapter01.PersonServiceImpl">
+		<constructor-arg value="이순신"/>
+	</bean>
+	<bean id="personService2" class="chapter01.PersonServiceImpl">
+		<constructor-arg value="손흥민"/>
+		<constructor-arg value="23"/>
+	</bean>
+</beans>
